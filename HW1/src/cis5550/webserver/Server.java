@@ -22,6 +22,26 @@ public class Server {
         out.println(message); // the status code message
         out.flush();
     }
+    private static String guessContentType(File file) {
+        String name = file.getName().toLowerCase();
+        if (name.endsWith(".html") || name.endsWith(".htm")){
+            return "text/html";
+        } 
+        if (name.endsWith(".txt")) {
+            return "text/plain";
+        }
+        if (name.endsWith(".png")){
+            return "image/png";
+        } 
+        if (name.endsWith(".jpg") || name.endsWith(".jpeg")){
+            return "image/jpeg";
+        } 
+        if (name.endsWith(".gif")) {
+            return "image/gif";
+        }
+        return "unknown";
+    }
+
     public static void main(String[] args) throws IOException{
         //let's first make sure the right number of arguments is given in
         if (args.length!=2){
@@ -127,7 +147,7 @@ public class Server {
         //THIS IS STEP THREE IN WHICH WE ARE GOING TO ACTUALLY SEND A DUMMY RESPONSE BACK!
         PrintWriter out = new PrintWriter(sock.getOutputStream());
         out.println("HTTP/1.1 200 OK");
-        out.println("Content-Type: text/plain" ); //GOTTA coME BACk TO THIS ANd makE IT WORK
+        out.println("Content-Type: " + guessContentType(file)); //GOTTA coME BACk TO THIS ANd makE IT WORK
         out.println("Server: cis5550.webserver.Server");
         out.println("Content-Length: "+file.length());
         out.println(); // this differentiates the header from the body
