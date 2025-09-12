@@ -149,8 +149,8 @@ public class Server {
         out.println("HTTP/1.1 200 OK");
         out.println("Content-Type: " + guessContentType(file)); //GOTTA coME BACk TO THIS ANd makE IT WORK
         out.println("Server: cis5550.webserver.Server");
-        out.println("Content-Length: "+file.length());
-        out.println(); // this differentiates the header from the body
+        out.println("Content-Length: "+file.length()+"\r\n");
+        out.println("\r\n"); // this differentiates the header from the body
         //out.println("Hi omg i hope this works!"); // body --- lol this was my test message earlier
 
         out.flush();
