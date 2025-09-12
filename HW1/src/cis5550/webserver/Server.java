@@ -14,13 +14,9 @@ public class Server {
 
     //this is my error response method, because i have to send it so many times
     private static void showError(Socket sock, int code, String message) throws IOException{
-        PrintWriter out = new PrintWriter(sock.getOutputStream());
-        out.println("HTTP/1.1 "+ code+ " "+ message);
-        out.println("Content-Type: text/plain");
-        out.println("Server: cis5550.webserver.Server");
-        out.println("Content-Length: "+message.length());
-        out.println(); // this differentiates the header from the body
-        out.println(message); // the status code message
+        OutputStream out = sock.getOutputStream();
+        String response = "HTTP/1.1 " + code + " " + message + "\r\n" + "Content-Type: text/plain\r\n" +"Server: cis5550.webserver.Server\r\n" +"Content-Length: " + message.length() + "\r\n" +"\r\n" + message;
+        out.write(response.getBytes());
         out.flush();
     }
     private static String guessContentType(File file) throws IOException {
@@ -187,8 +183,6 @@ public class Server {
 
         outputstream.flush();
         filestream.close();
-
-        sock.close();
       //  listening_sock.close();
         
     
