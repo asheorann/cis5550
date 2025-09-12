@@ -145,19 +145,17 @@ public class Server {
             }
         }
         //THIS IS STEP THREE IN WHICH WE ARE GOING TO ACTUALLY SEND A DUMMY RESPONSE BACK!
-        PrintWriter out = new PrintWriter(sock.getOutputStream());
-        out.println("HTTP/1.1 200 OK");
-        out.println("Content-Type: " + guessContentType(file)); //GOTTA coME BACk TO THIS ANd makE IT WORK
-        out.println("Server: cis5550.webserver.Server");
-        out.println("Content-Length: "+file.length()+"\r\n");
-        out.println("\r\n"); // this differentiates the header from the body
+        OutputStream outputstream = sock.getOutputStream();
+        String headers = "HTTP/1.1 200 OK\r\n" + "Content-Type: " + guessContentType(file) + "\r\n" +"Server: cis5550.webserver.Server\r\n" +"Content-Length: " + file.length() + "\r\n" +"\r\n"; // two indents at the end
+        outputstream.write(headers.getBytes() );
+        outputstream.flush();
         //out.println("Hi omg i hope this works!"); // body --- lol this was my test message earlier
 
         out.flush();
 
         //now we send the actual file message
         FileInputStream filestream = new FileInputStream(file);
-        OutputStream outputstream = sock.getOutputStream();
+       
         byte[] buf2 = new byte [4000];
         int a;
         //same logic we been using, write it into the buffer until we reach the end
