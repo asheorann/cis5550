@@ -61,14 +61,30 @@ public class Server {
 
         //we make the port number an integer from the command line argument
         int port_number = Integer.parseInt(args[0]);
+        String dir = args[1];
         //we create a socket with that socket number
         ServerSocket listening_sock = new ServerSocket(port_number);
-        //we allow that socket to accept incoming messages
-        Socket sock = listening_sock.accept();
+        System.out.println("Server is running on port number "+port_number);
 
-        //once we get something we say where it is coming from
-        logger.info("connection from:" +sock.getRemoteSocketAddress());
-        
+        while(true){
+            //we allow that socket to accept incoming messages
+            Socket sock = listening_sock.accept();
+
+            //once we get something we say where it is coming from
+            logger.info("connection from:" +sock.getRemoteSocketAddress());
+
+            try {
+                actuallyServing((sock), dir);
+            } catch (Exception e) {
+                logger.error("Error serving: " + e.getMessage());
+            } finally{
+                sock.close();
+            }
+
+        }
+    }
+    public static void actuallyServing (Socket sock, String dir) throws IOException {
+           
         //info is going from the socket to this in stream
         InputStream in = sock.getInputStream();
         //basically here create a buffer in which the incoming data/message can be read, 2000 indices in an empty array
@@ -126,7 +142,6 @@ public class Server {
         }
 
         //lets check some errors about the file
-        String dir = args[1];
         //this finds the file
         File file = new File(dir, url);
         if (!file.exists()){
