@@ -71,8 +71,10 @@ public class Server {
             for (int i=3; i<full_read_len;i+=1){
                 if(buf[i-3]==13 &&buf[i-2]==10&&buf[i-1]==13&&buf[i]==10){ //we copy the header piece in headerBytes
                     headerBytes = Arrays.copyOfRange(buf, 0, i);//we read the headerBytes and extrac the first line and the rest of the headers, the basic logic is it goes from bytes, to characters to per line
-                    break;
                 }
+            }
+            if (headerBytes!=null){
+                break;
             }
         }
         
