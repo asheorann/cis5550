@@ -100,6 +100,10 @@ public class Server {
                 showError(sock, 400, "Bad Request");
                 return;
             }
+            if (!method.equals("HTTP/1.1")){
+                showError(sock, 400, "Bad Request");
+                return;
+            }
             if("POST".equals(request_line_parts[0])||"PUT".equals(request_line_parts[0])){
                 showError(sock, 405, "Not Allowed");
                 return;
