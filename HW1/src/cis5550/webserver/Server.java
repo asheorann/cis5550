@@ -91,24 +91,30 @@ public class Server {
         //since we have the request line, we can break that apart and check for a few errors:
         if (request_line_parts.length!=3){
             showError(sock, 400, "Bad Request");
+            return;
         }
         if("POST".equals(request_line_parts[0])||"PUT".equals(request_line_parts[0])){
             showError(sock, 405, "Not Allowed");
+            return;
         }
-        if(!"POST".equals(request_line_parts[0])||!"PUT".equals(request_line_parts[0])||!"GET".equals(request_line_parts[0])||!"HEAD".equals(request_line_parts[0])){
+        if(!"POST".equals(request_line_parts[0])&&!"PUT".equals(request_line_parts[0])&&!"GET".equals(request_line_parts[0])&&!"HEAD".equals(request_line_parts[0])){
             showError(sock, 501, "Not Implemented");
+            return;
         }
         if (!"HTTP/1.1".equals(request_line_parts[2])){
             showError(sock, 505, "Version Not Supported");
+            return;
         }
         if (url.contains("..")){
             showError(sock, 403, "Forbidden");
+            return;
         }
 
         //lets check some errors about the file
         File file = new File(dir, url); //finds the file
         if (!file.exists()){
             showError(sock, 404, "Not Found");
+            return;
         }
         if (!file.canRead()) {
             showError(sock, 403, "Forbidden");
