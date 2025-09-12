@@ -133,7 +133,7 @@ public class Server {
             }
         }
         //THIS JUST READS THE MESSAGE, CURRENTLY WE ARE NOT DOING ANYTHING WITH IT!
-        if (contentLength>0&&!method.equals("GET")||!method.equals("HEAD")) {
+        if (contentLength>0&&!method.equals("GET")&&!method.equals("HEAD")) {
             byte[] body_message = new byte[contentLength];//here we basically create an array that stores the length of the body message
             int totalRead =0;
             while(totalRead<contentLength){ //here we read into the buffer the message
