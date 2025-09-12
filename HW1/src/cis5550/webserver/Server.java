@@ -44,13 +44,16 @@ public class Server {
         while(true){
             Socket sock = listening_sock.accept();//we allow that socket to accept incoming messages
             logger.info("connection from:" +sock.getRemoteSocketAddress()); //we allow that socket to accept incoming messages
-            try {
-                actuallyServing((sock), dir);
-            } catch (Exception e) {
-                logger.error("Error serving: " + e.getMessage());
-            } finally{
-                sock.close();
-            }
+            new Thread(() -> {
+                try {
+                    actuallyServing((sock), dir);
+                } catch (Exception e) {
+                    logger.error("Error serving: " + e.getMessage());
+                } finally{
+                    try{sock.close();} catch (IOException ignored) {}
+                }
+            }).start();
+
         }
     }
     public static void actuallyServing (Socket sock, String dir) throws IOException {
@@ -97,7 +100,7 @@ public class Server {
             showError(sock, 405, "Not Allowed");
             return;
         }
-        if(!"POST".equals(request_line_parts[0])&&!"PUT".equals(request_line_parts[0])&&!"GET".equals(request_line_parts[0])&&!"HEAD".equals(request_line_parts[0])){
+        if(!method.equals("PUT")&&!method.equals("POST")&&!method.equals("GET")&&!method.equals("HEAD")){
             showError(sock, 501, "Not Implemented");
             return;
         }
@@ -130,7 +133,7 @@ public class Server {
             }
         }
         //THIS JUST READS THE MESSAGE, CURRENTLY WE ARE NOT DOING ANYTHING WITH IT!
-        if (contentLength>0) {
+        if (contentLength>0&&!method.equals("GET")||!method.equals("HEAD")) {
             byte[] body_message = new byte[contentLength];//here we basically create an array that stores the length of the body message
             int totalRead =0;
             while(totalRead<contentLength){ //here we read into the buffer the message
