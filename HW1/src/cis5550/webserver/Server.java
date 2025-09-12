@@ -2,6 +2,7 @@ package cis5550.webserver;
 import cis5550.tools.Logger;
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 
 //this is the package name and the public class Server is the main server that is accessed
@@ -22,25 +23,33 @@ public class Server {
         out.println(message); // the status code message
         out.flush();
     }
-    private static String guessContentType(File file) {
-        String name = file.getName().toLowerCase();
-        if (name.endsWith(".html") || name.endsWith(".htm")){
-            return "text/html";
-        } 
-        if (name.endsWith(".txt")) {
-            return "text/plain";
+    private static String guessContentType(File file) throws IOException {
+        String type = Files.probeContentType(file.toPath());
+        if (type == null) {
+            return "application/octet-stream";
         }
-        if (name.endsWith(".png")){
-            return "image/png";
-        } 
-        if (name.endsWith(".jpg") || name.endsWith(".jpeg")){
-            return "image/jpeg";
-        } 
-        if (name.endsWith(".gif")) {
-            return "image/gif";
-        }
-        return "unknown";
+        return type;
     }
+
+    // private static String guessContentType(File file) {
+    //     String name = file.getName().toLowerCase();
+    //     if (name.endsWith(".html") || name.endsWith(".htm")){
+    //         return "text/html";
+    //     } 
+    //     if (name.endsWith(".txt")) {
+    //         return "text/plain";
+    //     }
+    //     if (name.endsWith(".png")){
+    //         return "image/png";
+    //     } 
+    //     if (name.endsWith(".jpg") || name.endsWith(".jpeg")){
+    //         return "image/jpeg";
+    //     } 
+    //     if (name.endsWith(".gif")) {
+    //         return "image/gif";
+    //     }
+    //     return "unknown";
+    // }
 
     public static void main(String[] args) throws IOException{
         //let's first make sure the right number of arguments is given in
