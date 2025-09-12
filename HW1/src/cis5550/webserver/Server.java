@@ -151,8 +151,6 @@ public class Server {
         outputstream.flush();
         //out.println("Hi omg i hope this works!"); // body --- lol this was my test message earlier
 
-        out.flush();
-
         //now we send the actual file message
         FileInputStream filestream = new FileInputStream(file);
        
