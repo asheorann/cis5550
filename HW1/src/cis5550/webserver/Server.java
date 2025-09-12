@@ -88,7 +88,7 @@ public class Server {
         //info is going from the socket to this in stream
         InputStream in = sock.getInputStream();
         //basically here create a buffer in which the incoming data/message can be read, 2000 indices in an empty array
-        byte[] buf = new byte[4000];
+        byte[] buf = new byte[8000];
         int full_read_len = 0;
         //i am temporarily setting headerbytes to null
         byte[] headerBytes = null;
@@ -178,7 +178,7 @@ public class Server {
         //now we send the actual file message
         FileInputStream filestream = new FileInputStream(file);
        
-        byte[] buf2 = new byte [4000];
+        byte[] buf2 = new byte [8000];
         int a;
         //same logic we been using, write it into the buffer until we reach the end
         while ((a=filestream.read(buf2))!=-1){
