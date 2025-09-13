@@ -65,6 +65,7 @@ public class Server {
             int full_read_len = 0; //will use below
             byte[] headerBytes = null;//i am temporarily setting headerbytes to null
             //Okay, this was previously just making the incoming data into a string, instead I need to keep it as bytes
+            int alreadyRead = 0;
             while(true){
                 int n = in.read(buf, full_read_len, buf.length-full_read_len); //in.read gives the number of bytes read in, and it can come in many chunks hence the loop
                 if (n==-1) break; //when the client has finished sending in.read gives -1
@@ -73,6 +74,7 @@ public class Server {
                 for (int i=3; i<full_read_len;i+=1){
                     if(buf[i-3]==13 &&buf[i-2]==10&&buf[i-1]==13&&buf[i]==10){ //we copy the header piece in headerBytes
                         headerBytes = Arrays.copyOfRange(buf, 0, i);//we read the headerBytes and extrac the first line and the rest of the headers, the basic logic is it goes from bytes, to characters to per line
+                        alreadyRead=full_read_len-headerBytes.length;
                     }
                 }
                 if (headerBytes!=null){
@@ -108,7 +110,7 @@ public class Server {
                 showError(sock, 501, "Not Implemented");
                 return;
             }
-            if (!"HTTP/1.1".equals(request_line_parts[2])){
+            if (!version.equals("HTTP/1.1")){
                 showError(sock, 505, "Version Not Supported");
                 return;
             }
@@ -152,6 +154,10 @@ public class Server {
             if (contentLength>0) {
                 byte[] body_message = new byte[contentLength];//here we basically create an array that stores the length of the body message
                 int totalRead =0;
+                if (alreadyRead > 0){
+                    System.arraycopy(buf, headerBytes.length, body_message, 0, alreadyRead);
+                    totalRead+=alreadyRead;
+                }
                 while(totalRead<contentLength){ //here we read into the buffer the message
                     int n = in.read(body_message, totalRead, contentLength-totalRead);
                     if (n==-1) break;
