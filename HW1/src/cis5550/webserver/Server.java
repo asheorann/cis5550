@@ -150,6 +150,11 @@ public class Server {
                 showError(sock, 400, "Bad Request");
                 return;
             }
+            if (method.equals("GET") && contentLength > 0) {
+                showError(sock, 400, "Bad Request");
+                return;
+            }
+
             //THIS JUST READS THE MESSAGE, CURRENTLY WE ARE NOT DOING ANYTHING WITH IT!
             if (contentLength>0) {
                 byte[] body_message = new byte[contentLength];//here we basically create an array that stores the length of the body message
