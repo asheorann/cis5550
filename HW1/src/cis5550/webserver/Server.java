@@ -100,10 +100,6 @@ public class Server {
                 showError(sock, 400, "Bad Request");
                 return;
             }
-            if (!version.equals("HTTP/1.1")){
-                showError(sock, 400, "Bad Request");
-                return;
-            }
             if("POST".equals(request_line_parts[0])||"PUT".equals(request_line_parts[0])){
                 showError(sock, 405, "Not Allowed");
                 return;
@@ -141,7 +137,7 @@ public class Server {
                 if (line.startsWith("Content-Length:")){
                     contentLength = Integer.parseInt(line.substring(15).trim()); //basically underneath the we just get the content length number, which is from the 15th index onward
                 }
-                if (line.startsWith("Host")){
+                if (line.toLowerCase().startsWith("host")){
                     hostheader = true;
                 }
                 if (line.toLowerCase().startsWith("connection")){
