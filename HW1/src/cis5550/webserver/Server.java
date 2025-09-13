@@ -5,6 +5,8 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Date;
+
 
 //main class (blueprint of the server), from which objects are called
 public class Server {
@@ -39,11 +41,11 @@ public class Server {
         int port_number = Integer.parseInt(args[0]);   //Here I process the port number and directory and make variables
         String dir = args[1];
 
-        ServerSocket listening_sock = new ServerSocket(port_number); //We create a socket with that socket number, that keeps listening for new ports
+        ServerSocket listening_sock = new ServerSocket(port_number); //I created a socket with that socket number, that keeps listening for new ports
 
         while(true){
-            Socket sock = listening_sock.accept();//we allow that socket to accept incoming messages
-            logger.info("connection from:" +sock.getRemoteSocketAddress()); //we allow that socket to accept incoming messages
+            Socket sock = listening_sock.accept();//I allowed that socket to accept incoming messages
+            logger.info("connection from:" +sock.getRemoteSocketAddress()); //I allowed that socket to accept incoming messages
             new Thread(() -> {
                 try {
                     actuallyServing((sock), dir);
@@ -70,10 +72,10 @@ public class Server {
                 int n = in.read(buf, full_read_len, buf.length-full_read_len); //in.read gives the number of bytes read in, and it can come in many chunks hence the loop
                 if (n==-1) break; //when the client has finished sending in.read gives -1
                 full_read_len+=n;
-                //in the for loop below, we find out where the headers end    
+                //in the for loop below, I find out where the headers end    
                 for (int i=3; i<full_read_len;i+=1){
-                    if(buf[i-3]==13 &&buf[i-2]==10&&buf[i-1]==13&&buf[i]==10){ //we copy the header piece in headerBytes
-                        headerBytes = Arrays.copyOfRange(buf, 0, i);//we read the headerBytes and extrac the first line and the rest of the headers, the basic logic is it goes from bytes, to characters to per line
+                    if(buf[i-3]==13 &&buf[i-2]==10&&buf[i-1]==13&&buf[i]==10){ //I copy the header piece in headerBytes
+                        headerBytes = Arrays.copyOfRange(buf, 0, i);//I read the headerBytes and extrac the first line and the rest of the headers, the basic logic is it goes from bytes, to characters to per line
                         headerEnd = i+1;
                     }
                 }
@@ -91,7 +93,7 @@ public class Server {
             String requestLine = reader.readLine(); //the first request line
             logger.info("Request line: "+requestLine); //logs the request line each time
 
-            //here we are just splitting up the request line
+            //here I am just splitting up the request line
             String[] request_line_parts = requestLine.split(" ");
             if (request_line_parts.length!=3){
                 showError(sock, 400, "Bad Request");
@@ -101,7 +103,7 @@ public class Server {
             String url=request_line_parts[1];
             String version = request_line_parts[2];
             
-            //since we have the request line, we can break that apart and check for a few errors:
+            //since I have the request line, I can break that apart and check for a few errors:
 
             if("POST".equals(request_line_parts[0])||"PUT".equals(request_line_parts[0])){
                 showError(sock, 405, "Not Allowed");
@@ -138,7 +140,7 @@ public class Server {
             while((line = reader.readLine())!= null &&!line.isEmpty()){
                 logger.info("header: "+line);
                 if (line.startsWith("Content-Length:")){
-                    contentLength = Integer.parseInt(line.substring(15).trim()); //basically underneath the we just get the content length number, which is from the 15th index onward
+                    contentLength = Integer.parseInt(line.substring(15).trim()); //basically underneath the just get the content length number, which is from the 15th index onward
                 }
                 if (line.toLowerCase().startsWith("host:")){
                     hostheader = true;
@@ -146,41 +148,46 @@ public class Server {
                 if (line.toLowerCase().startsWith("connection")){
                     closeHeader=line.toLowerCase();
                 }
+                //I AM GOING TO TRY THE EXTRA CREDIT PIECE!
+                if (line.toLowerCase().startsWith("if-modified-since:")){
+                    String theDate = line.substring(18).trim();
+                    System.out.println(theDate);
+                }
             }
             if (hostheader==false){
                 showError(sock, 400, "Bad Request");
                 return;
             }
 
-            //THIS JUST READS THE MESSAGE, CURRENTLY WE ARE NOT DOING ANYTHING WITH IT!
+            //THIS JUST READS THE MESSAGE, CURRENTLY I Am NOT DOING ANYTHING WITH IT!
             int alreadyRead=full_read_len-headerEnd;
 
             if (contentLength>0) {
-                byte[] body_message = new byte[contentLength];//here we basically create an array that stores the length of the body message
+                byte[] body_message = new byte[contentLength];//here I basically create an array that stores the length of the body message
                 int totalRead =0;
                 if (alreadyRead > 0){
                     System.arraycopy(buf, headerBytes.length, body_message, 0, alreadyRead);
                     totalRead+=alreadyRead;
                 }
-                while(totalRead<contentLength){ //here we read into the buffer the message
+                while(totalRead<contentLength){ //here I read into the buffer the message
                     int n = in.read(body_message, totalRead, contentLength-totalRead);
                     if (n==-1) break;
                     totalRead+=n;
                 }
             }
-            //THIS IS STEP THREE IN WHICH WE ARE GOING TO ACTUALLY SEND A  RESPONSE BACK!
+            //THIS IS STEP THREE IN WHICH I AM GOING TO ACTUALLY SEND A  RESPONSE BACK!
             if (method.equals("GET")||method.equals("HEAD")){
                 String headers = "HTTP/1.1 200 OK\r\n" + "Content-Type: " + guessContentType(file) + "\r\n" +"Server: cis5550.webserver.Server\r\n" +"Content-Length: " + file.length() + "\r\n" +"\r\n"; // two indents at the end
                 outputstream.write(headers.getBytes() );
                 outputstream.flush();
             }
 
-            //now we send the actual file message
+            //now I send the actual file message
             if (method.equals("GET")){
                 FileInputStream filestream = new FileInputStream(file);
                 byte[] buf2 = new byte [8000];
                 int a;
-                while ((a=filestream.read(buf2))!=-1){         //same logic we been using, write it into the buffer until we reach the end
+                while ((a=filestream.read(buf2))!=-1){         //same logic I been using, write it into the buffer until we reach the end
                     outputstream.write(buf2,0,a);
                 }
                 outputstream.flush();
