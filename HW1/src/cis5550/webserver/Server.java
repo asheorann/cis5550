@@ -93,15 +93,16 @@ public class Server {
 
             //here we are just splitting up the request line
             String[] request_line_parts = requestLine.split(" ");
+            if (request_line_parts.length!=3){
+                showError(sock, 400, "Bad Request");
+                return;
+            }
             String method=request_line_parts[0];
             String url=request_line_parts[1];
             String version = request_line_parts[2];
             
             //since we have the request line, we can break that apart and check for a few errors:
-            if (request_line_parts.length!=3){
-                showError(sock, 400, "Bad Request");
-                return;
-            }
+
             if("POST".equals(request_line_parts[0])||"PUT".equals(request_line_parts[0])){
                 showError(sock, 405, "Not Allowed");
                 return;
