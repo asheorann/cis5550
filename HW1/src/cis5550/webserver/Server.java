@@ -100,7 +100,7 @@ public class Server {
                 showError(sock, 400, "Bad Request");
                 return;
             }
-            if (!method.equals("HTTP/1.1")){
+            if (!version.equals("HTTP/1.1")){
                 showError(sock, 400, "Bad Request");
                 return;
             }
