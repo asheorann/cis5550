@@ -15,7 +15,7 @@ public class Server {
     //METHOD: this is my error response, which sends a response back to a specific socket, with the following headers and message
     private static void showError(Socket sock, int code, String message) throws IOException{
         OutputStream out = sock.getOutputStream();
-        String response = "HTTP/1.1 " + code + " " + message + "\r\n" + "Content-Type: text/plain\r\n" +"Server: cis5550.webserver.Server\r\n" +"Content-Length: " + message.length() + "\r\n" +"\r\n" + message;
+        String response = "HTTP/1.1 " + code + " " + message + "\r\n" + "Content-Type: text/plain\r\n" +"Connection: close\r\n" +"Server: cis5550.webserver.Server\r\n" +"Content-Length: " + message.length() + "\r\n" +"\r\n" + message;
         out.write(response.getBytes());
         out.flush();
     }
@@ -65,7 +65,7 @@ public class Server {
             int full_read_len = 0; //will use below
             byte[] headerBytes = null;//i am temporarily setting headerbytes to null
             //Okay, this was previously just making the incoming data into a string, instead I need to keep it as bytes
-            int alreadyRead = 0;
+            int headerEnd = -1;
             while(true){
                 int n = in.read(buf, full_read_len, buf.length-full_read_len); //in.read gives the number of bytes read in, and it can come in many chunks hence the loop
                 if (n==-1) break; //when the client has finished sending in.read gives -1
@@ -74,6 +74,7 @@ public class Server {
                 for (int i=3; i<full_read_len;i+=1){
                     if(buf[i-3]==13 &&buf[i-2]==10&&buf[i-1]==13&&buf[i]==10){ //we copy the header piece in headerBytes
                         headerBytes = Arrays.copyOfRange(buf, 0, i);//we read the headerBytes and extrac the first line and the rest of the headers, the basic logic is it goes from bytes, to characters to per line
+                        headerEnd = i+1;
                     }
                 }
                 if (headerBytes!=null){
@@ -138,7 +139,7 @@ public class Server {
                 if (line.startsWith("Content-Length:")){
                     contentLength = Integer.parseInt(line.substring(15).trim()); //basically underneath the we just get the content length number, which is from the 15th index onward
                 }
-                if (line.toLowerCase().startsWith("host")){
+                if (line.toLowerCase().startsWith("host:")){
                     hostheader = true;
                 }
                 if (line.toLowerCase().startsWith("connection")){
@@ -149,13 +150,9 @@ public class Server {
                 showError(sock, 400, "Bad Request");
                 return;
             }
-            if (method.equals("GET") && contentLength > 0) {
-                showError(sock, 400, "Bad Request");
-                return;
-            }
 
             //THIS JUST READS THE MESSAGE, CURRENTLY WE ARE NOT DOING ANYTHING WITH IT!
-            alreadyRead=full_read_len-headerBytes.length;
+            int alreadyRead=full_read_len-headerEnd;
 
             if (contentLength>0) {
                 byte[] body_message = new byte[contentLength];//here we basically create an array that stores the length of the body message
