@@ -112,6 +112,25 @@ public class Server {
             //gotta log the error
         }
     }
+    //gotta make the helper function
+    private void parsequerypars(String qstring, Map<String, String> pars){
+        if (qstring ==null){
+            return;
+        }
+        String[] pairs = qstring.split("&") ;
+        for (String pair : pairs) {
+            String[] element = pair.split("=", 2);
+            if (element.length == 2) {
+                try {
+                    String key = java.net.URLDecoder.decode(element[0], "UTF-8"); //prayin this works lol
+                    String value = java.net.URLDecoder.decode(element[1], "UTF-8");
+                    pars.put(key, value);
+                } catch (Exception e) {
+                    //wait i gotta COME BACK TO THIS IDK WHAT TO PUT HERE
+                }
+            }
+        }
+    }
     private boolean routematching(String routepath, String requrl, Map<String, String> pars){
         String[] rparts = routepath.split("/");
         String [] urlparts = requrl.split("/"); //splitting both these of based on /
@@ -183,9 +202,19 @@ public class Server {
         String method=request_line_parts[0];
         String url=request_line_parts[1];
         String version = request_line_parts[2];
-        
         //no reading all the headers into a map
         Map<String, String> headers= new HashMap<>();
+        Map<String, String> querypars = new HashMap<>(); // making another map for the last step 
+        //okay now adding a check for the ? in the url 
+        if (url.contains("?")){
+            int indexofquestion = url.indexOf('?');
+            String qstring = url.substring(indexofquestion+1);
+            url = url.substring(0, indexofquestion);
+            //now imma call the helper function i made earlier
+            parsequerypars(qstring, querypars);
+        }
+        
+
         String line;
         while((line=reader.readLine())!=null && !line.isEmpty()){
             String [] headerComps = line.split(":", 2);
@@ -208,6 +237,17 @@ public class Server {
             }
            // sock.getInputStream().read(bodyBits, 0, contentLength);
         }
+        //checking the content type rq
+        String contenttype= headers.get("content-type");
+        if (contenttype!=null && contenttype.startsWith("application/x-www-form-urlencoded")) {
+            try {
+                String bodys = new String(bodyBits, "UTF-8");
+                parsequerypars(bodys, querypars);
+            } catch (Exception e){
+                //again ig im jsut ignoring not sure what to do here come back
+            } 
+        }
+
         // now time to figure out the routing loigc
 
         Boolean foundroute = false;
@@ -216,7 +256,7 @@ public class Server {
             if (route.method.equals(method) && routematching(route.path, url, pathpars)){
                 foundroute = true;
                 try {
-                    Request req= new RequestImpl(method, url, version, headers, new HashMap<>(), pathpars, (InetSocketAddress)sock.getRemoteSocketAddress(), bodyBits, instance);
+                    Request req= new RequestImpl(method, url, version, headers, querypars, pathpars, (InetSocketAddress)sock.getRemoteSocketAddress(), bodyBits, instance);
                     Response res = new ResponseImpl(sock.getOutputStream());  
                     Object result = route.handler.handle(req, res);
                     //building the response to send back
