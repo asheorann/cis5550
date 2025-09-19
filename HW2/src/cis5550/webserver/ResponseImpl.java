@@ -1,4 +1,5 @@
 package cis5550.webserver;
+import java.io.OutputStream;
 import java.util.*;
 
 //wait come back to this
@@ -8,8 +9,13 @@ public class ResponseImpl implements Response {
     private String statusText = "OK";
     private Map<String, String> headers = new HashMap<>();
     private byte[] body = null;
+
+    //now i am on the writeing step so i hav eto connect directly to the socket so need these new fields
+    private OutputStream out;
+    private boolean writtenheaders = false;
     
-    public ResponseImpl(){
+    public ResponseImpl(OutputStream out){
+        this.out=out;
         headers.put("content-type", "text/html");
     }
 
@@ -42,7 +48,22 @@ public class ResponseImpl implements Response {
     }
 
     public void write(byte[] b) throws Exception {
-
+        //first imma make sure that headers arent already written
+        if (writtenheaders==false){
+            String statusLine = "HTTP/1.1 " +statusCode + " " + statusText+ "\r\n";
+            out.write(statusLine.getBytes());
+            for (Map.Entry<String, String> entry : headers.entrySet()){
+                String headLine = entry.getKey()+": "+ entry.getValue()+"\r\n";
+                out.write(headLine.getBytes());
+            }
+            //as always gotta add another line to seperate headers and th ebody
+            out.write("\r\n".getBytes());
+            writtenheaders=true; // now i make em true
+        }
+        out.write(b); //this is the acc byte array
+    }
+    public boolean writtenheaders(){
+        return writtenheaders;
     }
     public int getStatusCode() { return statusCode; }
     public String getStatusText() { return statusText; }

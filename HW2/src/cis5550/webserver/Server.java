@@ -112,6 +112,28 @@ public class Server {
             //gotta log the error
         }
     }
+    private boolean routematching(String routepath, String requrl, Map<String, String> pars){
+        String[] rparts = routepath.split("/");
+        String [] urlparts = requrl.split("/"); //splitting both these of based on /
+        int rlen=rparts.length;
+        if (urlparts.length!=rlen){
+            return false;
+        }
+
+        for(int i =0; i<rlen;i+=1){
+            String rpart = rparts[i];
+            String urlpart= urlparts[i];
+             if (rpart.startsWith(":")) {
+                pars.put(rpart.substring(1), urlpart); //basically putting the parameter name and value and putting in map
+            }
+            else{
+                if(!rpart.equals(urlpart)){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     public void actuallyServing (Socket sock, String dir) throws IOException {
         InputStream in = sock.getInputStream();  //info is going from the socket to this in stream
         byte[] buf = new byte[8000]; //basically here create a buffer in which the incoming data/message can be read, 8000 indices in an empty array
@@ -190,11 +212,12 @@ public class Server {
 
         Boolean foundroute = false;
         for (RouteEntry route : routes) { //so i am accessing my routing table
-            if (route.method.equals(method) && route.path.equals(url)){
+            Map<String, String> pathpars = new HashMap<>();
+            if (route.method.equals(method) && routematching(route.path, url, pathpars)){
                 foundroute = true;
                 try {
-                    Request req= new RequestImpl(method, url, version, headers, null, null, (InetSocketAddress)sock.getRemoteSocketAddress(), bodyBits, instance);
-                    Response res = new ResponseImpl();  
+                    Request req= new RequestImpl(method, url, version, headers, new HashMap<>(), pathpars, (InetSocketAddress)sock.getRemoteSocketAddress(), bodyBits, instance);
+                    Response res = new ResponseImpl(sock.getOutputStream());  
                     Object result = route.handler.handle(req, res);
                     //building the response to send back
                     ResponseImpl resImpl = (ResponseImpl) res;
@@ -205,17 +228,20 @@ public class Server {
                         resImpl.header("content-length", String.valueOf(resImpl.getBody().length)); //just adding the length just if the user did not
                     }
                     //now imma send the status line, heades and body to the client
-                    OutputStream out = sock.getOutputStream();
-                    String statusLine = "HTTP/1.1 "+resImpl.getStatusCode() +" "+resImpl.getStatusText()+"\r\n";
-                    out.write(statusLine.getBytes());
+                    if (!resImpl.writtenheaders()){
+                        OutputStream out = sock.getOutputStream();
+                        String statusLine = "HTTP/1.1 "+resImpl.getStatusCode() +" "+resImpl.getStatusText()+"\r\n";
+                        out.write(statusLine.getBytes());
 
-                    //here looping thru all the headers in response object and writing them
-                    for(Map.Entry<String, String> entry : resImpl.getHeaders().entrySet()){
-                        out.write((entry.getKey() +": "+entry.getValue() + "\r\n").getBytes());
-                    }
-                    out.write("\r\n".getBytes()); //to differentiate headers from the body
-                    if (resImpl.getBody()!=null){
-                        out.write(resImpl.getBody());
+                        //here looping thru all the headers in response object and writing them
+                        for(Map.Entry<String, String> entry : resImpl.getHeaders().entrySet()){
+                            out.write((entry.getKey() +": "+entry.getValue() + "\r\n").getBytes());
+                        }
+                        out.write("\r\n".getBytes()); //to differentiate headers from the body
+                        if (resImpl.getBody()!=null){
+                            out.write(resImpl.getBody());
+                        }
+                        out.flush();
                     }
                     
                 } catch ( Exception e) {
