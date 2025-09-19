@@ -6,7 +6,9 @@ import java.net.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 //main class (blueprint of the server), from which objects are called
@@ -112,143 +114,152 @@ public class Server {
     }
     public void actuallyServing (Socket sock, String dir) throws IOException {
         InputStream in = sock.getInputStream();  //info is going from the socket to this in stream
-        OutputStream outputstream = sock.getOutputStream();
-        boolean ongoing = true;
-        while(ongoing){
-            byte[] buf = new byte[8000]; //basically here create a buffer in which the incoming data/message can be read, 8000 indices in an empty array
-            int full_read_len = 0; //will use below
-            byte[] headerBytes = null;//i am temporarily setting headerbytes to null
-            //Okay, this was previously just making the incoming data into a string, instead I need to keep it as bytes
-            int headerEnd = -1;
-            while(true){
-                int n = in.read(buf, full_read_len, buf.length-full_read_len); //in.read gives the number of bytes read in, and it can come in many chunks hence the loop
-                if (n==-1) break; //when the client has finished sending in.read gives -1
-                full_read_len+=n;
-                //in the for loop below, I find out where the headers end    
-                for (int i=3; i<full_read_len;i+=1){
-                    if(buf[i-3]==13 &&buf[i-2]==10&&buf[i-1]==13&&buf[i]==10){ //I copy the header piece in headerBytes
-                        headerBytes = Arrays.copyOfRange(buf, 0, i);//I read the headerBytes and extrac the first line and the rest of the headers, the basic logic is it goes from bytes, to characters to per line
-                        headerEnd = i+1;
-                    }
-                }
-                if (headerBytes!=null){
-                    break;
+        byte[] buf = new byte[8000]; //basically here create a buffer in which the incoming data/message can be read, 8000 indices in an empty array
+        int full_read_len = 0; //will use below
+        byte[] headerBytes = null;//i am temporarily setting headerbytes to null
+        //Okay, this was previously just making the incoming data into a string, instead I need to keep it as bytes
+        int headerEnd = -1;
+        while(full_read_len<buf.length){ // could change this to the full read is less hten the buffer length
+            int n = in.read(buf, full_read_len, buf.length-full_read_len); //in.read gives the number of bytes read in, and it can come in many chunks hence the loop
+            if (n==-1) break; //when the client has finished sending in.read gives -1
+            full_read_len+=n;
+            //in the for loop below, I find out where the headers end    
+            for (int i=3; i<full_read_len;i+=1){
+                if(buf[i-3]==13 &&buf[i-2]==10&&buf[i-1]==13&&buf[i]==10){ //I copy the header piece in headerBytes
+                    headerBytes = Arrays.copyOfRange(buf, 0, i+1);//I read the headerBytes and extrac the first line and the rest of the headers, the basic logic is it goes from bytes, to characters to per line
+                    headerEnd = i+1;
+                    // MAYBE CHANGE THIS HERE
                 }
             }
-            
-            if (headerBytes ==null){
-              //  logger.warn("No headers found");
-                return;
+            if (headerEnd!=-1){
+                break;
             }
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBytes))); //headerbytes is a byte array [71, 60 ..], which is converted into ['G'], 'E', then the buffered reader reads each line at a tiem
-            String requestLine = reader.readLine(); //the first request line
-           // logger.info("Request line: "+requestLine); //logs the request line each time
-
-            //here I am just splitting up the request line
-            String[] request_line_parts = requestLine.split(" ");
-            if (request_line_parts.length!=3){
-                showError(sock, 400, "Bad Request");
-                return;
+            if (headerBytes!=null){
+                break;
             }
-            String method=request_line_parts[0];
-            String url=request_line_parts[1];
-            String version = request_line_parts[2];
-            
-            //since I have the request line, I can break that apart and check for a few errors:
-
-            if("POST".equals(request_line_parts[0])||"PUT".equals(request_line_parts[0])){
-                showError(sock, 405, "Not Allowed");
-                return;
-            }
-            if(!method.equals("PUT")&&!method.equals("POST")&&!method.equals("GET")&&!method.equals("HEAD")){
-                showError(sock, 501, "Not Implemented");
-                return;
-            }
-            if (!version.equals("HTTP/1.1")){
-                showError(sock, 505, "Version Not Supported");
-                return;
-            }
-            if (url.contains("..")){
-                showError(sock, 403, "Forbidden");
-                return;
-            }
-
-            //lets check some errors about the file
-            File file = new File(dir, url); //finds the file
-            if (!file.exists()){
-                showError(sock, 404, "Not Found");
-                return;
-            }
-            if (!file.canRead()) {
-                showError(sock, 403, "Forbidden");
-                return;
-            }
-
-            String line;
-            int contentLength =0;
-            boolean hostheader = false;
-            String closeHeader = " ";
-            while((line = reader.readLine())!= null &&!line.isEmpty()){
-                //logger.info("header: "+line);
-                if (line.startsWith("Content-Length:")){
-                    contentLength = Integer.parseInt(line.substring(15).trim()); //basically underneath the just get the content length number, which is from the 15th index onward
-                }
-                if (line.toLowerCase().startsWith("host:")){
-                    hostheader = true;
-                }
-                if (line.toLowerCase().startsWith("connection")){
-                    closeHeader=line.toLowerCase();
-                }
-                //I AM GOING TO TRY THE EXTRA CREDIT PIECE!
-                if (line.toLowerCase().startsWith("if-modified-since:")){
-                    String theDate = line.substring(18).trim();
-                    System.out.println(theDate);
-                }
-            }
-            if (hostheader==false){
-                showError(sock, 400, "Bad Request");
-                return;
-            }
-
-            //THIS JUST READS THE MESSAGE, CURRENTLY I Am NOT DOING ANYTHING WITH IT!
-            int alreadyRead=full_read_len-headerEnd;
-
-            if (contentLength>0) {
-                byte[] body_message = new byte[contentLength];//here I basically create an array that stores the length of the body message
-                int totalRead =0;
-                if (alreadyRead > 0){
-                    System.arraycopy(buf, headerBytes.length, body_message, 0, alreadyRead);
-                    totalRead+=alreadyRead;
-                }
-                while(totalRead<contentLength){ //here I read into the buffer the message
-                    int n = in.read(body_message, totalRead, contentLength-totalRead);
-                    if (n==-1) break;
-                    totalRead+=n;
-                }
-            }
-            //THIS IS STEP THREE IN WHICH I AM GOING TO ACTUALLY SEND A  RESPONSE BACK!
-            if (method.equals("GET")||method.equals("HEAD")){
-                String headers = "HTTP/1.1 200 OK\r\n" + "Content-Type: " + guessContentType(file) + "\r\n" +"Server: cis5550.webserver.Server\r\n" +"Content-Length: " + file.length() + "\r\n" +"\r\n"; // two indents at the end
-                outputstream.write(headers.getBytes() );
-                outputstream.flush();
-            }
-
-            //now I send the actual file message
-            if (method.equals("GET")){
-                FileInputStream filestream = new FileInputStream(file);
-                byte[] buf2 = new byte [8000];
-                int a;
-                while ((a=filestream.read(buf2))!=-1){         //same logic I been using, write it into the buffer until we reach the end
-                    outputstream.write(buf2,0,a);
-                }
-                outputstream.flush();
-                filestream.close();       
-            }   
-        if (closeHeader.contains("close")){
-            ongoing= false;
-        }     
         }
+        if (headerBytes ==null){
+            sock.close();
+           // logger.warn("No headers found");
+            return;
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(headerBytes))); //headerbytes is a byte array [71, 60 ..], which is converted into ['G'], 'E', then the buffered reader reads each line at a tiem
+        String requestLine = reader.readLine(); //the first request line
+            
+        if (requestLine==null || requestLine.isEmpty()){
+            sock.close();
+            return;
+        }
+        // logger.info("Request line: "+requestLine); //logs the request line each time
+
+        //here I am just splitting up the request line
+        String[] request_line_parts = requestLine.split(" ");
+        if (request_line_parts.length!=3){
+            showError(sock, 400, "Bad Request");
+            return;
+        }
+        String method=request_line_parts[0];
+        String url=request_line_parts[1];
+        String version = request_line_parts[2];
         
+        //no reading all the headers into a map
+        Map<String, String> headers= new HashMap<>();
+        String line;
+        while((line=reader.readLine())!=null && !line.isEmpty()){
+            String [] headerComps = line.split(":", 2);
+            if (headerComps.length==2){
+                headers.put(headerComps[0].trim().toLowerCase(), headerComps[1].trim()); //here i am putting the headers into the hashmap
+            }
+        }
+        //Now, imma read the body
+        byte[] bodyBits = new byte[0];
+        if (headers.containsKey("content-length")){
+            int contentLength = Integer.parseInt(headers.get("content-length")); //get the content length
+            bodyBits = new byte[contentLength]; //create the array of that length
+            int alreadyRead = full_read_len-headerEnd;
+            System.arraycopy(buf, headerEnd, bodyBits, 0, Math.min(alreadyRead, contentLength));
+            int totalRead = alreadyRead;
+            while (totalRead < contentLength) {
+                int n = in.read(bodyBits, totalRead, contentLength - totalRead);
+                if (n == -1) break;
+                totalRead += n;
+            }
+           // sock.getInputStream().read(bodyBits, 0, contentLength);
+        }
+        // now time to figure out the routing loigc
+
+        Boolean foundroute = false;
+        for (RouteEntry route : routes) { //so i am accessing my routing table
+            if (route.method.equals(method) && route.path.equals(url)){
+                foundroute = true;
+                try {
+                    Request req= new RequestImpl(method, url, version, headers, null, null, (InetSocketAddress)sock.getRemoteSocketAddress(), bodyBits, instance);
+                    Response res = new ResponseImpl();  
+                    Object result = route.handler.handle(req, res);
+                    //building the response to send back
+                    ResponseImpl resImpl = (ResponseImpl) res;
+                    if (result!=null){
+                        resImpl.body(result.toString());
+                    }        
+                    if (resImpl.getBody()!=null){
+                        resImpl.header("content-length", String.valueOf(resImpl.getBody().length)); //just adding the length just if the user did not
+                    }
+                    //now imma send the status line, heades and body to the client
+                    OutputStream out = sock.getOutputStream();
+                    String statusLine = "HTTP/1.1 "+resImpl.getStatusCode() +" "+resImpl.getStatusText()+"\r\n";
+                    out.write(statusLine.getBytes());
+
+                    //here looping thru all the headers in response object and writing them
+                    for(Map.Entry<String, String> entry : resImpl.getHeaders().entrySet()){
+                        out.write((entry.getKey() +": "+entry.getValue() + "\r\n").getBytes());
+                    }
+                    out.write("\r\n".getBytes()); //to differentiate headers from the body
+                    if (resImpl.getBody()!=null){
+                        out.write(resImpl.getBody());
+                    }
+                    
+                } catch ( Exception e) {
+                    showError(sock, 500, "Internal Server Error");
+                }
+                break;
+            }
+        }
+        if (foundroute==false){
+            if(dir!=null){
+                File file = new File(dir, url); //finds the file
+                if (!file.exists()){
+                    showError(sock, 404, "Not Found");
+                    return;
+                }
+                if (!file.canRead()) {
+                    showError(sock, 403, "Forbidden");
+                    return;
+                }
+                else{
+                    OutputStream outputstream = sock.getOutputStream();
+                    String headerstext = "HTTP/1.1 200 OK\r\n" + "Content-Type: " + guessContentType(file) + "\r\n" +"Server: cis5550.webserver.Server\r\n" +"Content-Length: " + file.length() + "\r\n" +"\r\n"; // two indents at the end
+                    outputstream.write(headerstext.getBytes()); //this is me sending the headers to the client
+                    //now I send the actual file message
+                    if (method.equals("GET")){
+                        FileInputStream filestream = new FileInputStream(file);
+                        byte[] buf2 = new byte [8000];
+                        int a;
+                        while ((a=filestream.read(buf2))!=-1){         //same logic I been using, write it into the buffer until we reach the end
+                            outputstream.write(buf2,0,a);
+                        }
+                        filestream.close();       
+                    } 
+                    outputstream.flush();
+  
+                }
+            }
+            else{
+                showError(sock, 404, "Not Found");
+            }
+           // sock.close();
+        }
+        sock.close();
+        //since I have the request line, I can break that apart and check for a few errors:
     }
+    
 }

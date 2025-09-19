@@ -45,7 +45,7 @@ public class ResponseImpl implements Response {
 
     }
     public int getStatusCode() { return statusCode; }
-    public String getReasonPhrase() { return statusText; }
+    public String getStatusText() { return statusText; }
     public Map<String, String> getHeaders() { return headers; }
     public byte[] getBody() { return body; }
 }
