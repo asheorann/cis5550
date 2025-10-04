@@ -1,5 +1,12 @@
 package cis5550.kvs;
 import cis5550.webserver.Server;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
 //import cis5550.generic.Worker;
 
 
@@ -19,6 +26,40 @@ public class Worker extends cis5550.generic.Worker{
         String storagedir=args[1];
         String coordinatoraddy=args[2];
         Server.port(workerport);
-        cis5550.generic.Worker.startPingThread(coordinatoraddy, storagedir, workerport);
+        String workerid=null;
+        Path idfilepath=Paths.get(storagedir, "id");
+        File storagedirfile= new File(storagedir);
+        try {
+            if (!storagedirfile.exists()){
+                if(!storagedirfile.mkdirs()){
+                    System.out.println("failed to dcreate storage dir");
+                }
+            }
+            if(Files.exists(idfilepath)){
+                workerid=Files.readAllLines(idfilepath, StandardCharsets.UTF_8).get(0).trim();
+
+                System.out.println("worker id read from file:"+workerid);
+            }
+            else{
+                Random random = new  Random();
+                String newid = ""; 
+                for (int i=0; i<5; i++) {
+                    char randomChar = (char)(random.nextInt(26) + 'a');
+                    newid = newid+randomChar; 
+                }
+                workerid = newid;
+                Files.write(idfilepath, workerid.getBytes(StandardCharsets.UTF_8));
+                System.out.println("New Worker ID generated and written to file: " + workerid);
+            } 
+            if(workerid==null||workerid.isEmpty()){
+                throw new IOException("worker id is empty");
+            }
+            
+        } 
+        catch (IOException e) {
+            System.out.println("error accessing or writing worker id file");
+            System.exit(1);
+        }
+        cis5550.generic.Worker.startPingThread(coordinatoraddy, storagedir, workerport, workerid);
     }
 }

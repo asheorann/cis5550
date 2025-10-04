@@ -9,13 +9,7 @@ import java.util.Random;
 import java.net.URL;
 
 public class Worker {
-    public static void startPingThread(String coordinatoraddy, String storagedir, int workerport){
-        Random random =new Random();
-        String workerid=""; //initializing it
-        for (int i=0; i<5;i++){
-            char randomChar=(char) (random.nextInt(26)+'a');
-            workerid=workerid+randomChar;
-        }
+    public static void startPingThread(String coordinatoraddy, String storagedir, int workerport, String workerid){
         String finalworkerid=workerid;
         String portstring=String.valueOf(workerport);
         new Thread(()->{
