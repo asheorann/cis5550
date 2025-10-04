@@ -10,7 +10,7 @@ public class WorkerEntry {
         this.id=id;
         this.ip=ip;
         this.port=port;
-        this.lastPingTime=System.currentTimeMillis();
+        //this.lastPingTime=System.currentTimeMillis();
     }
 
 }

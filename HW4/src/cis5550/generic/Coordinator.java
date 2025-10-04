@@ -3,12 +3,14 @@ import java.util.*;
 import cis5550.webserver.Server;
 import cis5550.webserver.Response;
 import cis5550.webserver.Request;
-import java.util.Collections;
-import java.util.Map;
 import cis5550.kvs.WorkerEntry;
+import java.util.Collections;
+import java.util.Iterator;
 
 public class Coordinator {
     //for right now just retruning an empty lsit
+    private static long workertimeoutTIME=15000;
+
     public static List<String> getWorkers(){
         List<WorkerEntry> sortedworkers = sortedWorkers();
         List<String> workeraddresses = new ArrayList<>();
@@ -19,11 +21,22 @@ public class Coordinator {
         return workeraddresses;
     }
     public static String workerTable(){
-        String wTable="<h2>Active Workers (dumdum)</h2>"
-             + "<table border=\"1\"><tr><th>ID</th><th>IP:Port</th><th>Link</th></tr>"
-             + "<tr><td colspan=\"3\">No workers as of nowww.</td></tr>"
-             + "</table>";
-    
+        List<WorkerEntry> activeworkers= sortedWorkers();
+        String wTable="<h2>Active Workers (real)</h2>"+ "<table border=\"1\"><tr><th>ID</th><th>IP:Port</th><th>Link</th></tr>";
+        if(activeworkers.isEmpty()){
+            wTable+="<tr><td colspan=\"2\">No active workers as of now.</td></tr>";
+        }
+        else{
+            for(WorkerEntry worker: activeworkers){
+                String ipport=worker.ip+":"+worker.port;
+                String url="http://"+ipport+"/";
+                wTable+="<tr>";
+                wTable+="<td>" + worker.id + "</td>";
+                wTable+= "<td>"+"<a href=\"" + url + "\">" + ipport + "</a>"+"</td>";
+                wTable+= "</tr>";
+            }
+        }
+        wTable+="</table>"; //ended the table lolz
         return wTable;
     }
     public static void registerRoutes(){
@@ -41,6 +54,7 @@ public class Coordinator {
         Server.get("/ping",(Request req, Response res) -> {
             String id= req.queryParams("id");
             String port= req.queryParams("port");
+            long currenttime=System.currentTimeMillis();
             if (id==null||port == null) {
                 res.status(400, "Bad Request");
                 res.body("ID and port parameters are neeeded");
@@ -50,12 +64,13 @@ public class Coordinator {
             cis5550.kvs.Coordinator.activeWorkers.compute(id, (key, worker) -> { 
                 if (worker==null) {
                     worker=new WorkerEntry(id, ip, port); //so this the 
+                    worker.lastPingTime=currenttime;
                     System.out.println("Registere worker: " +id + " at " +ip+":"+port);
                 } 
                 else {
                     worker.ip =ip;
                     worker.port =port;
-                    worker.lastPingTime =System.currentTimeMillis();
+                    worker.lastPingTime =currenttime;
                 }
                 return worker;
             });
@@ -66,8 +81,16 @@ public class Coordinator {
     }
     private static List<WorkerEntry> sortedWorkers(){
         List<WorkerEntry> allWorkers=new java.util.ArrayList<>(cis5550.kvs.Coordinator.activeWorkers.values());
-        Collections.sort(allWorkers, (w1, w2) ->  w1.id.compareTo(w2.id)); 
-        return allWorkers;
+        long currenttime=System.currentTimeMillis();
+        List<WorkerEntry> activeworkers = new ArrayList<>();
+        for (WorkerEntry worker: allWorkers){
+            long timesincelastping=currenttime-worker.lastPingTime;
+            if(timesincelastping<=workertimeoutTIME){
+                activeworkers.add(worker);
+            }
+        }
+        Collections.sort(activeworkers, (w1, w2) ->  w1.id.compareTo(w2.id)); //basicallu just sorting the list by id
+        return activeworkers;
         
     }
 }
