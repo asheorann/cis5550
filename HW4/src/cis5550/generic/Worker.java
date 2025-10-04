@@ -21,6 +21,7 @@ public class Worker {
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setConnectTimeout(2000); 
                     conn.setReadTimeout(2000);
+                    conn.setRequestMethod("GET");
                     conn.connect();
                     int responseCode=conn.getResponseCode();
                     if (responseCode!= 200) {

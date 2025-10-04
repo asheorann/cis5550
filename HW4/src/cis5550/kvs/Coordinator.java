@@ -12,7 +12,6 @@ public class Coordinator extends cis5550.generic.Coordinator{
     //then pass the port number into the webservers port
     //then call register routes
     //then define a route for / that does a few things
-    public static final ConcurrentHashMap<String, WorkerEntry> activeWorkers = new ConcurrentHashMap<>();
     public static void main(String[] args){
         int port = 0;
         if(args.length<1 || args.length>1){

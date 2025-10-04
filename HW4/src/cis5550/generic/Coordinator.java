@@ -1,12 +1,15 @@
 package cis5550.generic;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import cis5550.webserver.Server;
 import cis5550.webserver.Response;
 import cis5550.webserver.Request;
-import cis5550.kvs.WorkerEntry;
 
 public class Coordinator {
     //for right now just retruning an empty lsit
+    public static final ConcurrentHashMap<String, WorkerEntry> activeWorkers = new ConcurrentHashMap<>();
+
     private static final long workertimeoutTIME=15000;
 
     public static List<String> getWorkers(){
@@ -64,7 +67,7 @@ public class Coordinator {
                 return null;
             }
             String ip = req.ip(); //this is the ip address of the worker
-            cis5550.kvs.Coordinator.activeWorkers.compute(id, (key, worker) -> { 
+            activeWorkers.compute(id, (key, worker) -> { 
                 if (worker==null) {
                     worker=new WorkerEntry(id, ip, port); //so this the 
                     worker.lastPingTime=currenttime;
@@ -81,13 +84,13 @@ public class Coordinator {
             res.status(200, "OK");
             res.body("OK"); //yay it worked
             System.err.println("PING RECEIVED: id=" + id + " ip=" + ip + " port=" + port);
-            System.err.println("Map size after update = " + cis5550.kvs.Coordinator.activeWorkers.size());
+            System.err.println("Map size after update = " +activeWorkers.size());
 
             return null;
         });
     }
     private static List<WorkerEntry> sortedWorkers(){
-        List<WorkerEntry> allWorkers=new java.util.ArrayList<>(cis5550.kvs.Coordinator.activeWorkers.values());
+        List<WorkerEntry> allWorkers=new java.util.ArrayList<>(activeWorkers.values());
         long currenttime=System.currentTimeMillis();
         List<WorkerEntry> activeworkers = new ArrayList<>();
         for (WorkerEntry worker: allWorkers){
