@@ -22,7 +22,7 @@ public class Worker {
                     }
                 } 
                 catch ( Exception e) {
-                    System.out.println("ping to coordinator failed");
+                    System.err.println("ping to coordinator failed"+e.getMessage());
                 }
                 try {
                     Thread.sleep(5000); // milliseconds to second

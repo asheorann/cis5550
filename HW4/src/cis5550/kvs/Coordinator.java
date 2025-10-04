@@ -17,9 +17,14 @@ public class Coordinator extends cis5550.generic.Coordinator{
         int port = 0;
         if(args.length<1 || args.length>1){
             System.err.println("wrong number of command line arguments");
+            System.exit(1);
         }
-        else{
+        try{
             port = Integer.parseInt(args[0]);
+        }
+        catch(NumberFormatException e){
+            System.err.println("the port argument must be a valid int");    //see why i have an infinite loop!
+            System.exit(1);
         }
         Server.port(port);
         cis5550.generic.Coordinator.registerRoutes();

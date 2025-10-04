@@ -13,14 +13,15 @@ import java.util.Random;
 public class Worker extends cis5550.generic.Worker{
     public static void main(String[] args) {
         if (args.length!=3){
-            System.out.println("wrong number of arguments in command line");
+            System.err.println("wrong number of arguments in command line");
+            System.exit(1);
         }
         int workerport=0;
         try {
             workerport=Integer.parseInt(args[0]); //remember to turn stirng to int
         } 
         catch ( NumberFormatException e) {
-            System.out.println("the first argument(port) has to be a valid integer");
+            System.err.println("the first argument(port) has to be a valid integer");
             System.exit(1);
         }
         String storagedir=args[1];
@@ -57,7 +58,7 @@ public class Worker extends cis5550.generic.Worker{
             
         } 
         catch (IOException e) {
-            System.out.println("error accessing or writing worker id file");
+            System.err.println("error accessing or writing worker id file");
             System.exit(1);
         }
         cis5550.generic.Worker.startPingThread(coordinatoraddy, storagedir, workerport, workerid);

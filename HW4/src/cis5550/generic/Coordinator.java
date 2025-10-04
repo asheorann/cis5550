@@ -9,7 +9,7 @@ import java.util.Iterator;
 
 public class Coordinator {
     //for right now just retruning an empty lsit
-    private static long workertimeoutTIME=15000;
+    private static final long workertimeoutTIME=15000;
 
     public static List<String> getWorkers(){
         List<WorkerEntry> sortedworkers = sortedWorkers();
