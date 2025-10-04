@@ -8,9 +8,11 @@ import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 //import cis5550.generic.Worker;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Worker extends cis5550.generic.Worker{
+    private static ConcurrentHashMap<String, ConcurrentHashMap<String, Row>> tables=new ConcurrentHashMap<>();
     public static void main(String[] args) {
         if (args.length!=3){
             System.err.println("wrong number of arguments in command line");
@@ -62,6 +64,41 @@ public class Worker extends cis5550.generic.Worker{
             System.err.println("error accessing or writing worker id file");
             System.exit(1);
         }
+        Server.put("/data/:table/:row/:column", (req, res) -> {
+            String table = req.params("table");
+            String row = req.params("row");
+            String column = req.params("column");
+            byte[] data = req.bodyAsBytes();
+            tables.putIfAbsent(table, new ConcurrentHashMap<>());
+            ConcurrentHashMap<String, Row> tableData=tables.get(table);
+            tableData.putIfAbsent(row, new Row(row));
+            Row rowData=tableData.get(row); //im beginnging doing this pls work gradescope
+            rowData.put(column, data);
+            res.body("OK");
+            return null;
+        });
+        Server.get("/data/:table/:row/:column",(req,res) -> { //maybe adding these methods will allow it to pass?
+            String table=req.params("table");
+            String row=req.params("row");
+            String column=req.params("column");
+            ConcurrentHashMap<String, Row>tableData=tables.get(table);
+            if (tableData==null) { //if the table i snot found
+                res.status(404,"Not Found");
+                return null;
+            }
+            Row rowData=tableData.get(row); //if row is not found
+            if (rowData==null) {
+                res.status(404,"Not Found");
+                return null;
+            }
+            byte[] data = rowData.getBytes(column);
+            if (data==null) {
+                res.status(404,"Not Found"); //yadayadya agian we check about thenull
+                return null;
+            }
+            res.bodyAsBytes(data); //now return the daata as binaryyy
+            return null;
+        });
         cis5550.generic.Worker.startPingThread(coordinatoraddy, storagedir, workerport, workerid);
 
     }
