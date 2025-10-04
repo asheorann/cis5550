@@ -33,7 +33,8 @@ public class Worker extends cis5550.generic.Worker{
         try {
             if (!storagedirfile.exists()){
                 if(!storagedirfile.mkdirs()){
-                    System.out.println("failed to dcreate storage dir");
+                    System.err.println("failed to dcreate storage dir");
+                    System.exit(1);
                 }
             }
             if(Files.exists(idfilepath)){

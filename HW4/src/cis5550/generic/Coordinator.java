@@ -4,8 +4,6 @@ import cis5550.webserver.Server;
 import cis5550.webserver.Response;
 import cis5550.webserver.Request;
 import cis5550.kvs.WorkerEntry;
-import java.util.Collections;
-import java.util.Iterator;
 
 public class Coordinator {
     //for right now just retruning an empty lsit
@@ -37,6 +35,11 @@ public class Coordinator {
             }
         }
         wTable+="</table>"; //ended the table lolz
+        System.err.println("workerTable() called: " + activeworkers.size() + " active workers");
+        for (WorkerEntry w : activeworkers) {
+            System.err.println("  -> " + w.id + " at " + w.ip + ":" + w.port + " (lastPing=" + w.lastPingTime + ")");
+        }
+
         return wTable;
     }
     public static void registerRoutes(){
@@ -72,10 +75,14 @@ public class Coordinator {
                     worker.port =port;
                     worker.lastPingTime =currenttime;
                 }
+
                 return worker;
             });
             res.status(200, "OK");
             res.body("OK"); //yay it worked
+            System.err.println("PING RECEIVED: id=" + id + " ip=" + ip + " port=" + port);
+            System.err.println("Map size after update = " + cis5550.kvs.Coordinator.activeWorkers.size());
+
             return null;
         });
     }

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class Worker {
@@ -17,8 +18,18 @@ public class Worker {
                 try {
                     String pingurl="http://"+coordinatoraddy+"/ping?id="+finalworkerid+"&port="+portstring;
                     URL url=new URL(pingurl);
-                    try (InputStream stream =url.openStream()) { //im tryiggering the http request by opening and reading the stream
-                        new BufferedReader(new InputStreamReader(stream,StandardCharsets.UTF_8)).lines().forEach(s -> {});
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setConnectTimeout(2000); 
+                    conn.setReadTimeout(2000);
+                    conn.connect();
+                    int responseCode=conn.getResponseCode();
+                    if (responseCode!= 200) {
+                        System.err.println("Ping failled with this code: " + responseCode+ " for " +pingurl);
+                    } 
+                    else{
+                        try (InputStream stream=conn.getInputStream()) {
+                            while (stream.read()!= -1);
+                        }
                     }
                 } 
                 catch ( Exception e) {
