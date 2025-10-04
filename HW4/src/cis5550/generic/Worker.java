@@ -43,7 +43,7 @@ public class Worker {
                 }
             }
         }, "Worker-ping-thread");
-        pingthread.setDaemon(true); //im actually begging please work and autograder please please work
+        //pingthread.setDaemon(true); //im actually begging please work and autograder please please work
         pingthread.start();
 
     }
