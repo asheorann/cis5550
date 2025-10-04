@@ -29,6 +29,7 @@ public class Worker {
                     else{
                         System.err.println("Ping successful to " + pingurl);
                     }
+                    conn.disconnect();
                 } 
                 catch ( Exception e) {
                     System.err.println("ping to coordinator failed"+e.getMessage());
