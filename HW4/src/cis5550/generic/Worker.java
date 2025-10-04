@@ -27,9 +27,7 @@ public class Worker {
                         System.err.println("Ping failled with this code: " + responseCode+ " for " +pingurl);
                     } 
                     else{
-                        try (InputStream stream=conn.getInputStream()) {
-                            while (stream.read()!= -1);
-                        }
+                        System.err.println("Ping successful to " + pingurl);
                     }
                 } 
                 catch ( Exception e) {
