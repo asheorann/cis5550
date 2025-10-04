@@ -24,6 +24,9 @@ public class Worker {
                     conn.setRequestMethod("GET");
                     conn.connect();
                     int responseCode=conn.getResponseCode();
+                    try (InputStream in = conn.getInputStream()) {
+                        while (in.read()!= -1) { }
+                    }
                     if (responseCode!= 200) {
                         System.err.println("Ping failled with this code: " + responseCode+ " for " +pingurl);
                     } 
