@@ -26,9 +26,10 @@ public class Coordinator extends cis5550.generic.Coordinator{
             System.exit(1);
         }
         Server.port(port);
-        cis5550.generic.Coordinator.registerRoutes();
+        Coordinator coord=new Coordinator();
+        coord.registerRoutes();
         Server.get("/", (Request req, Response res) ->{
-            String workerTableHtml = cis5550.generic.Coordinator.workerTable();
+            String workerTableHtml = coord.workerTable();
             String html = "<html><head><title>KVS Coordinator</title></head><body>";
             html = html + "<h1>KVS Coordinator Status</h1>";
             html = html + workerTableHtml;
