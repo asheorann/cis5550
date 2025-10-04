@@ -4,6 +4,7 @@ import cis5550.webserver.Server;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.net.HttpURLConnection;
@@ -24,14 +25,19 @@ public class Worker {
                     conn.setRequestMethod("GET");
                     conn.connect();
                     int responseCode=conn.getResponseCode();
-                    try (InputStream in = conn.getInputStream()) {
-                        while (in.read()!= -1) { }
-                    }
-                    if (responseCode!= 200) {
-                        System.err.println("Ping failled with this code: " + responseCode+ " for " +pingurl);
+                    if (responseCode == 200){
+                        try (InputStream is=conn.getInputStream()) {
+                            is.transferTo(OutputStream.nullOutputStream()); 
+                        }
+                        System.err.println("Ping successful to "+pingurl);
                     } 
-                    else{
-                        System.err.println("Ping successful to " + pingurl);
+                    else {
+                        try (InputStream es = conn.getErrorStream()) {
+                            if (es != null) {
+                                es.transferTo(OutputStream.nullOutputStream());
+                            }
+                        }
+                        System.err.println("Ping failed with code: "+responseCode + " for " + pingurl); //trying to fix it still
                     }
                     conn.disconnect();
                 } 
