@@ -98,6 +98,9 @@ public class Coordinator {
             if(timesincelastping<=workertimeoutTIME){
                 activeworkers.add(worker);
             }
+            else{
+                activeWorkers.remove(worker.id);
+            }
         }
         Collections.sort(activeworkers, (w1, w2) ->  w1.id.compareTo(w2.id)); //basicallu just sorting the list by id
         return activeworkers;

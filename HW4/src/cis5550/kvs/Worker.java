@@ -63,10 +63,6 @@ public class Worker extends cis5550.generic.Worker{
             System.exit(1);
         }
         cis5550.generic.Worker.startPingThread(coordinatoraddy, storagedir, workerport, workerid);
-        try {
-            Thread.sleep(Long.MAX_VALUE);
-        } catch (InterruptedException e) {
-            System.err.println("Worker interrupted, shutting down");
-}
+
     }
 }
