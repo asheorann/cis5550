@@ -65,15 +65,24 @@ public class Worker extends cis5550.generic.Worker{
             System.exit(1);
         }
         Server.put("/data/:table/:row/:column", (req, res) -> {
-            String table = req.params("table");
-            String row = req.params("row");
-            String column = req.params("column");
-            byte[] data = req.bodyAsBytes();
+            String table=req.params("table");
+            String row=req.params("row");
+            String column=req.params("column");
+            byte[] data =req.bodyAsBytes();
+            String ifcolumn=req.queryParams("ifcolumn");
+            String equals=req.queryParams("equals");
             tables.putIfAbsent(table, new ConcurrentHashMap<>());
-            ConcurrentHashMap<String, Row> tableData=tables.get(table);
-            tableData.putIfAbsent(row, new Row(row));
-            Row rowData=tableData.get(row); //im beginnging doing this pls work gradescope
-            rowData.put(column, data);
+            ConcurrentHashMap<String, Row> tabledata=tables.get(table);
+            tabledata.putIfAbsent(row, new Row(row));
+            Row rowdata=tabledata.get(row); //im beginnging doing this pls work gradescope
+            if(ifcolumn!=null&&equals!=null){
+                String existingval=rowdata.get(ifcolumn);
+                if(existingval==null){
+                    res.body("FAILED");
+                    return null;
+                }
+            }
+            rowdata.put(column, data);
             res.body("OK");
             return null;
         });

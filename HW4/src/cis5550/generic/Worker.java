@@ -34,8 +34,7 @@ public class Worker {
                     else {
                         try (InputStream es = conn.getErrorStream()) {
                             if (es != null) {
-                                es.transferTo(OutputStream.nullOutputStream());
-                            }
+                                es.transferTo(OutputStream.nullOutputStream());}
                         }
                         System.err.println("Ping failed with code: "+responseCode + " for " + pingurl); //trying to fix it still
                     }
