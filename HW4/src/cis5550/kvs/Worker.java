@@ -39,7 +39,7 @@ public class Worker extends cis5550.generic.Worker{
             if(Files.exists(idfilepath)){
                 workerid=Files.readAllLines(idfilepath, StandardCharsets.UTF_8).get(0).trim();
 
-                System.out.println("worker id read from file:"+workerid);
+                System.err.println("worker id read from file:"+workerid);
             }
             else{
                 Random random = new  Random();
@@ -50,7 +50,7 @@ public class Worker extends cis5550.generic.Worker{
                 }
                 workerid = newid;
                 Files.write(idfilepath, workerid.getBytes(StandardCharsets.UTF_8));
-                System.out.println("New Worker ID generated and written to file: " + workerid);
+                System.err.println("New Worker ID generated and written to file: " + workerid);
             } 
             if(workerid==null||workerid.isEmpty()){
                 throw new IOException("worker id is empty");

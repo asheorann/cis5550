@@ -65,7 +65,7 @@ public class Coordinator {
                 if (worker==null) {
                     worker=new WorkerEntry(id, ip, port); //so this the 
                     worker.lastPingTime=currenttime;
-                    System.out.println("Registere worker: " +id + " at " +ip+":"+port);
+                    System.err.println("Registere worker: " +id + " at " +ip+":"+port);
                 } 
                 else {
                     worker.ip =ip;

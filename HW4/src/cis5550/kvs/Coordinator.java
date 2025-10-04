@@ -38,7 +38,7 @@ public class Coordinator extends cis5550.generic.Coordinator{
             res.body(html);
             return null;
         });
-        System.out.println("KVS coord running on port " +port );
+        System.err.println("KVS coord running on port " +port );
 
     }
 }
