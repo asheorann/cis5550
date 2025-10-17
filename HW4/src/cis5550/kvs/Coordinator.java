@@ -25,10 +25,10 @@ public class Coordinator extends cis5550.generic.Coordinator{
             System.err.println("the port argument must be a valid int");    //see why i have an infinite loop!
             System.exit(1);
         }
-        Server.port(port);
-        Coordinator coord=new Coordinator();
-        coord.registerRoutes();
-        Server.get("/", (Request req, Response res) ->{
+        Server.port(port); //tells the webserver to listen on that port
+        Coordinator coord=new Coordinator(); // start a new cooridnator
+        coord.registerRoutes(); // calls register routes
+        Server.get("/", (Request req, Response res) ->{ // this is deifning the home page route so without the rest of it, basically printing the worker table
             String workerTableHtml = coord.workerTable();
             String html = "<html><head><title>KVS Coordinator</title></head><body>";
             html = html + "<h1>KVS Coordinator Status</h1>";
