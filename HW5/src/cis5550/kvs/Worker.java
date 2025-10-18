@@ -166,7 +166,7 @@ public class Worker extends cis5550.generic.Worker{
             //now we gonna stream it back to the client and apply the filters starttorw and endrowexclusive
             String startrow=req.queryParams("startRow");
             String endrowexclusive=req.queryParams("endRowExclusive");
-            byte[] LF = "\n".getBytes();
+            final byte[] LF = new byte[]{10};
             for(Row row: rows){
                 String key=row.key();
                 if(startrow!=null&&key.compareTo(startrow)<0){
@@ -239,7 +239,9 @@ public class Worker extends cis5550.generic.Worker{
                 if(tabledir.exists()&&tabledir.isDirectory()){ //check if it exists andis a directory
                     tableexists=true;
                     File [] files=tabledir.listFiles();
-                    count=files.length;
+                    if(files!=null){
+                        count=files.length;
+                    }
                 }
             }
             else{//this is the in memory case
@@ -315,9 +317,12 @@ public class Worker extends cis5550.generic.Worker{
             if(tablename.startsWith("pt-")){
                 File tabledir= new File(storagedir, tablename);
                 File[] files=tabledir.listFiles(); //getting alist of all the files that are in the direcotry
-                for(File file:files){
-                    file.delete(); //go through each one and delete it
+                if(files!=null){
+                    for(File file:files){
+                        file.delete(); //go through each one and delete it
+                    }
                 }
+
                 //then deleteing hte table/directory itself
                 tabledir.delete();
             }else{
